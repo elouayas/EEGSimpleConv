@@ -1,2 +1,2 @@
-# EEGSimpleconv
-Repository of EEG-Simpleconv original paper
+# EEGSimpleConv
+Repository of EEG-SimpleConv original paper
