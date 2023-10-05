@@ -19,7 +19,10 @@ It consists of the following:
 # Abstract
 We propose EEG-SimpleConv, a straightforward 1D convolutional neural network for Motor Imagery decoding in BCI. Our main motivation is to propose a very simple baseline to compare to, using only very standard ingredients from the literature. We evaluate its performance on four EEG Motor Imagery datasets, including simulated online setups, and compare it to recent Deep Learning and Machine Learning approaches. EEG-SimpleConv is at least as good or far more efficient than other approaches, showing strong knowledge-transfer capabilities across subjects, at the cost of a low inference time. We advocate that using off-the-shelf ingredients rather than coming with ad- hoc solutions can significantly help the adoption of Deep Learning approaches for BCI. We make the code of the models and the experiments accessible in this repository.
 
-![architecture](architecture.png)
+
+<p align="center">
+  <img src="architecture.png" alt="architecture" width="200" />
+</p>
 
 
 # Results
