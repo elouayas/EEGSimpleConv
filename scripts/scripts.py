@@ -3,7 +3,7 @@ from models.EEGSimpleConv import EEGSimpleConv
 import numpy as np
 import random
 
-#import wandb ### uncomment this line to use wandb
+import wandb ### uncomment this line to use wandb
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 batch_size = 288
@@ -37,17 +37,18 @@ def load_data(dict_config):
     if 'online' not in dict_config.keys():
         dict_config['online']=False
     if dict_config['online']==True:
-        X = torch.load(path + '/' +dataset+'/X_EA_online.pt')
-        Y = torch.load(path + '/' +dataset+'/Y_online.pt')
+        if dict_config['within']: 
+            X = torch.load(path + '/' +dataset+'/X_EA_online_ft.pt')
+            Y = torch.load(path + '/' +dataset+'/Y_s.pt')
+        else : 
+            X = torch.load(path + '/' +dataset+'/X_EA_online_cross.pt')
+            Y = torch.load(path + '/' +dataset+'/Y_s.pt')
     else : 
         X = torch.load(x_path)
         Y = torch.load(path + '/' +dataset+'/Y'+s+'.pt')
-    if dataset=='BNCI' and not EOG :
-        X =[[XXX[:,:-3] for XXX in XX] for XX in X] if dict_config['session'] else [XX[:,:-3] for XX in X]
-    if dataset=='Zhou' and not EOG :
-        X =[[XXX[:,:-2] for XXX in XX] for XX in X] if dict_config['session'] else [XX[:,:-2] for XX in X]
-    if dataset=='Large' and not EOG:
-        X = [[XXX[:,[x for x in np.arange(30) if x not in [11,12,13]]] for XXX in XX] for XX in X] if dict_config['session'] else  [XX[:,[x for x in np.arange(30) if x not in [11,12,13]]] for XX in X]
+    if EOG:
+        print('warning EOG not supported in this code anymore')
+        assert EOG ==False
     if dict_config['model']=='EEGSimpleConv':
         n_chan = X[0][0].shape[1] if dict_config['session'] else X[0].shape[1]
         dict_config['params'].append(n_chan)
@@ -83,8 +84,7 @@ def loaders(idx,X,Y,lmso,nsplit,session,reg_subject,within=False,mdl=False):
     train_loader (torch dataloader)
     test_loader (list of zipped test set)
    """
-    
-    n_chan = X[0][0].shape[1] if session else X[0].shape[1]
+    n_chan = X[0][0].shape[1]
     if reg_subject:
         Y_subject = [[torch.tensor([i]*XXX.shape[0]) for XXX in XX] for i,XX in enumerate(X)] if session else  [torch.tensor([i]*XX.shape[0]) for i,XX in enumerate(X)] 
     if lmso :
@@ -285,7 +285,7 @@ def train_test(params, dict_config,X,Y):
     if dict_config['preload_reg']==True:
         params_model = params + [len(Y)]
     if dict_config['use_wandb']:
-        wandb.init(project="EEGSimpleConv", entity='brain-imt',config = dict_config,settings=wandb.Settings(start_method='fork'))
+        wandb.init(project="simpleconv_c", entity='brain-imt',config = dict_config,settings=wandb.Settings(start_method='fork'))
     
     
     model = instanciate_model(dict_config['model'],params_model)
@@ -301,7 +301,7 @@ def train_test(params, dict_config,X,Y):
         for n_run in range(runs):
             if dict_config['load_model']:
                 model = instanciate_model(dict_config['model'],params_model).to(device)
-                checkpoint = torch.load('/users/local/models_yassine/models_simpleconv/model_ft_'+str(idx_)+'_'+str(n_run)+'.pt')
+                checkpoint = torch.load(dict_config['load_model_path']+'/model_'+str(idx_)+'_'+str(n_run)+'.pt')
                 model.load_state_dict(checkpoint['model_state_dict'])
                 optimizer = torch.optim.Adam(model.parameters())
                 optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -312,11 +312,12 @@ def train_test(params, dict_config,X,Y):
             for epoch in range(dict_config['n_epochs']):
                 train_acc = train(epoch, model, criterion, optimizer, train_loader, mixup = dict_config['mixup'],T=dict_config['T'],preload_reg=dict_config['preload_reg'])
                 if epoch ==dict_config['n_epochs'] -1 : #%2==0
+                    if dict_config['save_model']:
+                        torch.save({'model_state_dict':model.state_dict(),'optimizer_state_dict': optimizer.state_dict()},dict_config['save_model_path']+'/model_ft_'+str(idx_)+'_'+str(n_run)+'.pt')
                     score = test(epoch, model, test_loader,dict_config['BN'],preload_reg=dict_config['preload_reg'])
                 scheduler.step()
             scores.append(score)
-            if dict_config['save_model']:
-                torch.save({'score':score,'model_state_dict':model.state_dict(),'optimizer_state_dict': optimizer.state_dict()},'/users/local/models_yassine/models_simpleconv/model_'+str(idx_)+'_'+str(n_run)+'.pt')
+            
             if n_run == runs - 1:
                 print(" average: {:.3f}".format(np.mean(scores[-runs:])))
             else:
