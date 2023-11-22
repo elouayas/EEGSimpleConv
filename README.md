@@ -26,7 +26,7 @@ We propose EEG-SimpleConv, a straightforward 1D convolutional neural network for
 
 
 # Results
--   BCI_competition_IV2a - acc: 76.2% (Within session),  70.6 (Cross-Subject), 84.4 (Cross-Session with Fine-Tuning)
+-   BCI_competition_IV2a - acc: 76.7% (Within session),  72.1 (Cross-Subject), 86.2 (Cross-Session with Fine-Tuning)
 -   Zhou2016 - acc: 81.8 (Cross-Subject)
 -   PhysionetMI - acc: 64.6 (Cross-Subject)
 -   Cho2017 - acc: 75.4 (Cross-Subject)
