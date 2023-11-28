@@ -6,7 +6,7 @@ import random
 import wandb ### uncomment this line to use wandb
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-batch_size = 288
+#batch_size = 288
 
 
 
@@ -132,6 +132,7 @@ def loaders(idx,X,Y,lmso,nsplit,session,reg_subject,within=False,mdl=False):
             test_X = [X[idx][1]]
             train_Y = Y[idx][0]
             test_Y = [Y[idx][1]]
+            
         elif within==False and session:
             X_ = X[:idx] + X[idx+1:]
             Y_ = Y[:idx] + Y[idx+1:]
@@ -152,7 +153,10 @@ def loaders(idx,X,Y,lmso,nsplit,session,reg_subject,within=False,mdl=False):
                 train_Y_subject = torch.unbind(torch.cat(Y_subject[:idx] + Y_subject[idx+1:])) #temp
                 test_Y_subject = [Y_subject[idx]]
     
-        
+    if within:
+        batch_size = 16
+    else :
+        batch_size = 288
     mean = train_X.transpose(1,2).reshape(-1, n_chan).mean(dim = 0)
     std = train_X.transpose(1,2).reshape(-1, n_chan).std(dim = 0)
     train_X = (train_X - mean.unsqueeze(0).unsqueeze(2)) / std.unsqueeze(0).unsqueeze(2)
@@ -313,7 +317,7 @@ def train_test(params, dict_config,X,Y):
                 train_acc = train(epoch, model, criterion, optimizer, train_loader, mixup = dict_config['mixup'],T=dict_config['T'],preload_reg=dict_config['preload_reg'])
                 if epoch ==dict_config['n_epochs'] -1 : #%2==0
                     if dict_config['save_model']:
-                        torch.save({'model_state_dict':model.state_dict(),'optimizer_state_dict': optimizer.state_dict()},dict_config['save_model_path']+'/model_ft_'+str(idx_)+'_'+str(n_run)+'.pt')
+                        torch.save({'model_state_dict':model.state_dict(),'optimizer_state_dict': optimizer.state_dict()},dict_config['save_model_path']+'/model_w_'+str(idx_)+'_'+str(n_run)+'.pt')
                     score = test(epoch, model, test_loader,dict_config['BN'],preload_reg=dict_config['preload_reg'])
                 scheduler.step()
             scores.append(score)
