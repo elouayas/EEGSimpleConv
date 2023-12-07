@@ -41,8 +41,9 @@ def load_data(dict_config):
             X = torch.load(path + '/' +dataset+'/X_EA_online_ft.pt')
             Y = torch.load(path + '/' +dataset+'/Y_s.pt')
         else : 
-            X = torch.load(path + '/' +dataset+'/X_EA_online_cross.pt')
+            X = torch.load(path + '/' +dataset+'/X_s.pt')
             Y = torch.load(path + '/' +dataset+'/Y_s.pt')
+            assert dict_config['BN'] == False and dict_config['EA'] == False
     else : 
         X = torch.load(x_path)
         Y = torch.load(path + '/' +dataset+'/Y'+s+'.pt')
